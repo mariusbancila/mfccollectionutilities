@@ -156,6 +156,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AlgorithmTests.cpp" />
     <ClCompile Include="ArrayTests.cpp" />
     <ClCompile Include="ListTests.cpp" />
     <ClCompile Include="MapTests.cpp" />
