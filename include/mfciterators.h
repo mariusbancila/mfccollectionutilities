@@ -355,8 +355,10 @@ public:
       m_collection(collection),
       m_pos(pos)
    {
-      if(pos == BEFORE_START_POSITION)
+      if (pos == BEFORE_START_POSITION)
          m_collection.GetNextAssoc(m_pos, m_value.key, m_value.value);
+      else if (pos == nullptr)
+         m_pos = PAST_END_POSITION;
    }
 
    bool operator!= (CTypeMapIterator<M, TKey, TValue> const & other) const noexcept
@@ -394,6 +396,8 @@ public:
    {
       if(pos == BEFORE_START_POSITION)
          m_collection.GetNextAssoc(m_pos, m_value.key, m_value.value);
+      else if (pos == nullptr)
+         m_pos = PAST_END_POSITION;
    }
 
    bool operator!= (CTypeMapConstIterator<M, TKey, TValue> const & other) const noexcept
