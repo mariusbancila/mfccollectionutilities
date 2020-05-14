@@ -9,7 +9,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace IteratorTests
 {
-   TEST_CLASS(AlgorithmTests)
+   TEST_CLASS(ArrayAlgorithmTests)
    {
       TEST_METHOD(Test_all_Of)
       {
@@ -244,15 +244,9 @@ namespace IteratorTests
             }
          }
       }
-      /*
+      
       TEST_METHOD(Test_fill_n)
       {
-         {
-            CArray<int> arr;
-            std::fill_n(begin(arr), 1, 1);
-            Assert::IsTrue(arr.IsEmpty());
-         }
-         
          {
             CArray<int> arr;
             arr.SetSize(10);
@@ -276,17 +270,16 @@ namespace IteratorTests
          }
 
          {
-            CWordArray arr;
+            CTypedPtrArray<CObArray, IntObject*> arr;
             arr.SetSize(10);
-            constexpr WORD value = 1;
-            std::fill_n(begin(arr), 15, value);
-            for (INT_PTR i = 0; i < arr.GetSize(); ++i)
+            IntObject* value = new IntObject(1);
+            std::fill_n(begin(arr), 5, value);
+            for (INT_PTR i = 0; i < 5; ++i)
             {
                Assert::AreEqual(value, arr[i]);
             }
          }
-      }
-      */
+      }      
 
       TEST_METHOD(Test_accumulate)
       {
@@ -320,16 +313,7 @@ namespace IteratorTests
             auto sum = std::accumulate(begin(arr), end(arr), 0);
             Assert::AreEqual(6, sum);
          }
-         /*
-         {
-            CList<int> arr;
-            arr.AddTail(1);
-            arr.AddTail(2);
-            arr.AddTail(3);
-            auto sum = std::accumulate(begin(arr), end(arr), 0);
-            Assert::AreEqual(6, sum);
-         }
-         */
+
          {
             CTypedPtrArray<CObArray, IntObject*> arr;
             arr.Add(new IntObject(1));
@@ -345,6 +329,30 @@ namespace IteratorTests
             for (auto p : arr)
                delete p;
          }
+      }
+
+      TEST_METHOD(Test_inner_product)
+      {
+         CArray<int> a;
+         a.Add(0);
+         a.Add(1);
+         a.Add(2);
+         a.Add(3);
+         a.Add(4);
+
+         CArray<int> b;
+         b.Add(5);
+         b.Add(4);
+         b.Add(2);
+         b.Add(3);
+         b.Add(1);
+
+         auto prod = std::inner_product(begin(a), end(a), begin(b), 0);
+         Assert::AreEqual(21, prod);
+
+         auto count = std::inner_product(begin(a), end(a), begin(b), 0,
+            std::plus<>(), std::equal_to<>());
+         Assert::AreEqual(2, count);
       }
    };
 }

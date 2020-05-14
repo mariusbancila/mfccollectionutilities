@@ -27,7 +27,7 @@
     <ClCompile Include="MapTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AlgorithmTests.cpp">
+    <ClCompile Include="ArrayAlgorithmTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -7,36 +7,162 @@
 
 #pragma once
 
+#include <assert.h>
+
 #pragma region array iterators
 
 template<typename T, typename TArg = T const &>
 class CArrayIterator
 {
 public:
+   typedef CArrayIterator<T, TArg>           self_type;
+   typedef T                                 value_type;
+   typedef T&                                reference;
+   typedef T*                                pointer;
+   typedef std::random_access_iterator_tag   iterator_category;
+   typedef ptrdiff_t                         difference_type;
+
+private:
+   bool compatible(self_type const& other) const
+   {
+      return m_collection == other.m_collection;
+   }
+
+public:
    explicit CArrayIterator(CArray<T, TArg>& collection, INT_PTR const index) noexcept :
       m_index(index),
-      m_collection(collection)
+      m_collection(&collection)
    {}
+
+   CArrayIterator() = default;
+   CArrayIterator(CArrayIterator<T, TArg> const& o) = default;
+   CArrayIterator& operator=(CArrayIterator<T, TArg> const& o) = default;
+
+   ~CArrayIterator() = default;
+
+   bool operator== (self_type const& other) const
+   {
+      assert(compatible(other));
+      return m_index == other.m_index;
+   }
 
    bool operator!= (CArrayIterator const & other) const noexcept
    {
-      return m_index != other.m_index;
+      return !(*this == other);
    }
 
-   T& operator* () const
+   reference operator* () const
    {
-      return m_collection[m_index];
+      if (m_collection->IsEmpty())
+         throw std::exception("Illegal function call");
+
+      return (*m_collection)[m_index];
    }
 
-   CArrayIterator<T, TArg> const & operator++ ()
+   reference operator-> () const
    {
+      if (m_collection->IsEmpty())
+         throw std::exception("Illegal function call");
+
+      return (*m_collection)[m_index];
+   }
+
+   self_type& operator++ ()
+   {
+      if (m_index >= m_collection->GetSize())
+         throw std::out_of_range("Iterator cannot be incremented past the end of range.");
       ++m_index;
       return *this;
    }
 
+   self_type operator++ (int)
+   {
+      self_type tmp = *this;
+      ++*this;
+      return tmp;
+   }
+
+   self_type& operator--()
+   {
+      if (m_index <= 0)
+         throw std::out_of_range("Iterator cannot be decremented past the end of range.");
+
+      --m_index;
+      return *this;
+   }
+
+   self_type operator--(int)
+   {
+      self_type tmp = *this;
+      --*this;
+      return tmp;
+   }
+
+   self_type& operator+=(difference_type const offset)
+   {
+      if (m_index + offset < 0 || m_index + offset > m_collection->GetSize())
+         throw std::out_of_range("Iterator cannot be incremented past the end of range.");
+
+      m_index += offset;
+      return *this;
+   }
+
+   self_type& operator-=(difference_type const offset)
+   {
+      return *this += -offset;
+   }
+
+   self_type operator+(difference_type offset) const
+   {
+      self_type tmp = *this;
+      return tmp += offset;
+   }
+
+   self_type operator-(difference_type offset) const
+   {
+      self_type tmp = *this;
+      return tmp -= offset;
+   }
+
+   difference_type operator-(self_type const& other) const
+   {
+      assert(compatible(other));
+      return (m_index - other.m_index);
+   }
+
+   bool operator<(self_type const& other) const
+   {
+      assert(compatible(other));
+      return m_index < other.m_index;
+   }
+
+   bool operator>(self_type const& other) const
+   {
+      return other < *this;
+   }
+
+   bool operator<=(self_type const& other) const
+   {
+      return !(other < *this);
+   }
+
+   bool operator>=(self_type const& other) const
+   {
+      return !(*this < other);
+   }
+
+   value_type& operator[](difference_type const offset)
+   {
+      return (*(*this + offset));
+   }
+
+   value_type const& operator[](difference_type const offset) const
+   {
+      return (*(*this + offset));
+   }
 private:
    INT_PTR           m_index;
-   CArray<T, TArg>&  m_collection;
+   CArray<T, TArg>*  m_collection;
 };
 
 template<typename T, typename TArg = T const &>
@@ -74,31 +200,152 @@ template <typename A, typename T>
 class CTypeArrayIterator
 {
 public:
+   typedef CTypeArrayIterator<A, T>          self_type;
+   typedef T                                 value_type;
+   typedef T& reference;
+   typedef T* pointer;
+   typedef std::random_access_iterator_tag   iterator_category;
+   typedef ptrdiff_t                         difference_type;
+
+private:
+   bool compatible(self_type const& other) const
+   {
+      return m_collection == other.m_collection;
+   }
+
+public:
    explicit CTypeArrayIterator(A& collection, INT_PTR const index) noexcept :
       m_index(index),
-      m_collection(collection)
+      m_collection(&collection)
    {
    }
 
-   bool operator!= (CTypeArrayIterator<A, T> const & other) const noexcept
+   CTypeArrayIterator() = default;
+   CTypeArrayIterator(CTypeArrayIterator<A, T> const& o) = default;
+   CTypeArrayIterator& operator=(CTypeArrayIterator<A, T> const& o) = default;
+
+   bool operator== (self_type const& other) const
    {
-      return m_index != other.m_index;
+      assert(compatible(other));
+      return m_index == other.m_index;
    }
 
-   T& operator* () const
+   bool operator!= (self_type const & other) const noexcept
    {
-      return m_collection[m_index];
+      return !(*this == other);
    }
 
-   CTypeArrayIterator<A, T> const & operator++ ()
+   reference operator* () const
    {
+      if(m_collection == nullptr)
+         throw std::exception("Illegal function call");
+
+      return (*m_collection)[m_index];
+   }
+
+   reference operator-> () const
+   {
+      if (m_collection == nullptr)
+         throw std::exception("Illegal function call");
+
+      return (*m_collection)[m_index];
+   }
+
+   self_type& operator++ ()
+   {
+      if (m_index >= m_collection->GetSize())
+         throw std::out_of_range("Iterator cannot be incremented past the end of range.");
       ++m_index;
       return *this;
    }
 
+   self_type operator++ (int)
+   {
+      self_type tmp = *this;
+      ++*this;
+      return tmp;
+   }
+
+   self_type& operator--()
+   {
+      if (m_index <= 0)
+         throw std::out_of_range("Iterator cannot be decremented past the end of range.");
+      --m_index;
+      return *this;
+   }
+
+   self_type operator--(int)
+   {
+      self_type tmp = *this;
+      --*this;
+      return tmp;
+   }
+
+   self_type& operator+=(difference_type const offset)
+   {
+      if (m_index + offset < 0 || m_index + offset > m_collection->GetSize())
+         throw std::out_of_range("Iterator cannot be incremented past the end of range.");
+
+      m_index += offset;
+      return *this;
+   }
+
+   self_type& operator-=(difference_type const offset)
+   {
+      return *this += -offset;
+   }
+
+   self_type operator+(difference_type offset) const
+   {
+      self_type tmp = *this;
+      return tmp += offset;
+   }
+
+   self_type operator-(difference_type offset) const
+   {
+      self_type tmp = *this;
+      return tmp -= offset;
+   }
+
+   difference_type operator-(self_type const& other) const
+   {
+      assert(compatible(other));
+      return (m_index - other.m_index);
+   }
+
+   bool operator<(self_type const& other) const
+   {
+      assert(compatible(other));
+      return m_index < other.m_index;
+   }
+
+   bool operator>(self_type const& other) const
+   {
+      return other < *this;
+   }
+
+   bool operator<=(self_type const& other) const
+   {
+      return !(other < *this);
+   }
+
+   bool operator>=(self_type const& other) const
+   {
+      return !(*this < other);
+   }
+
+   value_type& operator[](difference_type const offset)
+   {
+      return (*(*this + offset));
+   }
+
+   value_type const& operator[](difference_type const offset) const
+   {
+      return (*(*this + offset));
+   }
 private:
    INT_PTR  m_index;
-   A&       m_collection;
+   A*       m_collection;
 };
 
 template <typename A, typename T>
